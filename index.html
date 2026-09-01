@@ -88,8 +88,8 @@
     <div class="input-group">
       <label>Направление</label>
       <select id="direction" onchange="calculate()">
-        <option value="ton">USDT ➔ TON (Сеть TON)</option>
-        <option value="trc">USDT ➔ USDT (Сеть TRC20)</option>
+        <option value="USDT">USDT ➔ TON (Сеть TON)</option>
+        <option value="USDT">USDT ➔ USDT (Сеть TRC20)</option>
       </select>
     </div>
 
@@ -111,33 +111,62 @@
 </div>
 
 <script>
-  const APP_ID = '629242'; 
-
   function calculate() {
     const inputVal = parseFloat(document.getElementById('amount-in').value) || 0;
     const totalFee = 0.045; 
     const result = inputVal * (1 - totalFee);
     
-    const direction = document.getElementById('direction').value;
-    let currencySymbol = direction === 'ton' ? 'TON' : 'USDT';
-
-    document.getElementById('amount-out').innerText = `${result.toFixed(2)} ${currencySymbol}`;
+    // В CryptoBot сейчас лучше всего тестировать в базовой валюте, например USDT
+    document.getElementById('amount-out').innerText = `${result.toFixed(2)} TON/USDT`;
   }
 
-  function createInvoice() {
+  async function createInvoice() {
     const amount = document.getElementById('amount-in').value;
+    const btn = document.getElementById('pay-btn');
+    
     if (amount <= 0) {
       alert('Введите корректную сумму');
       return;
     }
 
-    const direction = document.getElementById('direction').value;
-    const payUrl = `https://t.me/CryptoBot?start=pay-${APP_ID}-${amount}-USDT`;
+    // Блокируем кнопку, чтобы не нажали дважды
+    btn.disabled = true;
+    btn.innerText = 'Создание счета...';
 
-    if (window.Telegram && window.Telegram.WebApp) {
-      window.Telegram.WebApp.openTelegramLink(payUrl);
-    } else {
-      window.open(payUrl, '_blank');
+    // ВНИМАНИЕ: Сюда мы впишем адрес твоего сервера из Render, когда создадим его!
+    const BACKEND_URL = 'https://ТВОЙ-СЕРВЕР.onrender.com/create-invoice';
+
+    try {
+      const response = await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          amount: amount,
+          asset: 'USDT' // Передаем валюту для счета
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.pay_url) {
+        // Если счет успешно создан сервером, открываем его в Telegram
+        if (window.Telegram && window.Telegram.WebApp) {
+          window.Telegram.WebApp.openTelegramLink(data.pay_url);
+        } else {
+          window.location.href = data.pay_url;
+        }
+      } else {
+        alert('Ошибка при создании счета: ' + (data.error || 'Неизвестная ошибка'));
+      }
+    } catch (error) {
+      alert('Ошибка соединения с сервером. Проверьте адрес бэкенда.');
+      console.error(error);
+    } finally {
+      // Возвращаем кнопку в исходное состояние
+      btn.disabled = false;
+      btn.innerText = 'Создать сделку';
     }
   }
 
