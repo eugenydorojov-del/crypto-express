@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Crypto Express</title>
-  <!-- Официальный скрипт Telegram Web App -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
@@ -116,7 +115,6 @@
     const totalFee = 0.045; 
     const result = inputVal * (1 - totalFee);
     
-    // В CryptoBot сейчас лучше всего тестировать в базовой валюте, например USDT
     document.getElementById('amount-out').innerText = `${result.toFixed(2)} TON/USDT`;
   }
 
@@ -129,11 +127,10 @@
       return;
     }
 
-    // Блокируем кнопку, чтобы не нажали дважды
     btn.disabled = true;
     btn.innerText = 'Создание счета...';
 
-    // ВНИМАНИЕ: Сюда мы впишем адрес твоего сервера из Render, когда создадим его!
+    // Твоя реальная рабочая ссылка на бэкенд в Render
     const BACKEND_URL = 'https://crypto-backend-2sfm.onrender.com/create-invoice';
 
     try {
@@ -144,14 +141,13 @@
         },
         body: JSON.stringify({
           amount: amount,
-          asset: 'USDT' // Передаем валюту для счета
+          asset: 'USDT' 
         })
       });
 
       const data = await response.json();
 
       if (data.success && data.pay_url) {
-        // Если счет успешно создан сервером, открываем его в Telegram
         if (window.Telegram && window.Telegram.WebApp) {
           window.Telegram.WebApp.openTelegramLink(data.pay_url);
         } else {
@@ -164,7 +160,6 @@
       alert('Ошибка соединения с сервером. Проверьте адрес бэкенда.');
       console.error(error);
     } finally {
-      // Возвращаем кнопку в исходное состояние
       btn.disabled = false;
       btn.innerText = 'Создать сделку';
     }
